@@ -4,11 +4,12 @@ using OsuScoreStats.DbService;
 using OsuScoreStats.DbService.Repositories;
 namespace OsuScoreStats.ApiMethods;
 
-public class ScoreMethods(ScoreDataContext db)
+public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
 {
     public async Task<IEnumerable<Score>> GetRecentScoresAsync(CancellationToken ct = default)
     {
-        var scoreRepository = new ScoreRepository(db);
+        var dbContext = dbContextFactory.CreateDbContext();
+        var scoreRepository = new ScoreRepository(dbContext);
         var recentScores = await scoreRepository.GetAll().Take(100).ToListAsync(ct);
         
         return recentScores;

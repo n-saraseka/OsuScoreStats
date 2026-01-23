@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using osu.Game.Online.API;
 namespace OsuScoreStats.ApiClasses;
@@ -21,7 +22,9 @@ public class Score
     [JsonConverter(typeof(StringEnumConverter))]
     public Grade Grade { get; set; }
     [JsonProperty("mods")]
+    [NotMapped]
     public APIMod[] Mods { get; set; } = Array.Empty<APIMod>();
+    public string[] ModAcronyms { get; set; } = Array.Empty<string>();
     [JsonProperty("accuracy")]
     public float Accuracy { get; set; }
     [JsonProperty("max_combo")]

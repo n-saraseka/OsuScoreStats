@@ -47,12 +47,25 @@ public class UserRepository(ScoreDataContext db) : IRepository<User>
 
     public async Task<int> UpdateAsync(User user, CancellationToken ct)
     {
+        var countryRepository = new CountryRepository(db);
+        var existingCountries = countryRepository.GetAll();
+        var userCountry = existingCountries.FirstOrDefault(c => c.Code == user.Country.Code);
+        if (userCountry != null)
+            user.Country = userCountry;
         db.Users.Update(user);
         return await db.SaveChangesAsync(ct);
     }
 
     public async Task<int> UpdateBulkAsync(IEnumerable<User> users, CancellationToken ct)
     {
+        var countryRepository = new CountryRepository(db);
+        var existingCountries = countryRepository.GetAll();
+        foreach (var user in users)
+        {
+            var userCountry = existingCountries.FirstOrDefault(c => c.Code == user.Country.Code);
+            if (userCountry != null)
+                user.Country = userCountry;
+        }
         db.Users.UpdateRange(users);
         return await db.SaveChangesAsync(ct);
     }

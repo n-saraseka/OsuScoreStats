@@ -9,18 +9,8 @@ public class ScoreConfiguration : IEntityTypeConfiguration<Score>
 {
     public void Configure(EntityTypeBuilder<Score> builder)
     {
-        builder.Property(s => s.Statistics).HasConversion(
-            v => JsonConvert.SerializeObject(v),
-            v => JsonConvert.DeserializeObject<Statistics>(v,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
-        builder.Property(s => s.MaximumStatistics).HasConversion(
-            v => JsonConvert.SerializeObject(v),
-            v => JsonConvert.DeserializeObject<Statistics>(v,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
-        builder.Property(s => s.Mods).HasConversion(
-            v => JsonConvert.SerializeObject(v),
-            v => JsonConvert.DeserializeObject<APIMod[]>(v,
-                new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+        builder.ComplexProperty(s => s.Statistics, stat => stat.ToJson());
+        builder.ComplexProperty(s => s.MaximumStatistics, stat => stat.ToJson());
         builder
             .HasOne<APIBeatmap>()
             .WithMany()

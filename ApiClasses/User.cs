@@ -11,6 +11,4 @@ public class User
     public string CountryCode { get; set; }
     [JsonProperty("country")]
     public Country Country { get; set; }
-    [JsonProperty("statistics_rulesets")]
-    public Dictionary<string, UserRulesetStatistics> RulesetStatistics;
 }

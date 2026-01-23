@@ -7,9 +7,16 @@ namespace OsuScoreStats.ScoreFetcherService;
 
 public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculator, IDbContextFactory<ScoreDataContext> dbContextFactory) : IScoreFetcher
 {
+    /// <summary>
+    /// Get scores from the API firehose
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>IEnumerable containing populated Score objects</returns>
     public async Task<IEnumerable<Score>> GetScoresAsync(CancellationToken ct = default)
     {
-        return await osuApiService.GetScoresAsync(ct);
+        var scores = await osuApiService.GetScoresAsync(ct);
+        ProcessModAcronyms(scores);
+        return scores;
     }
     /// <summary>
     /// Process data from unranked scores, including PP calculation. Calculates highest PP scores for each mode
@@ -22,7 +29,7 @@ public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculat
         var scoresList = scores.ToList();
         
         var start = scoresList[0].Date;
-        var end = scoresList[-1].Date;
+        var end = scoresList[scoresList.Count - 1].Date;
         var scoresCounter = scoresList.Count;
 
         for (int i = 0; i < scoresCounter; i++)
@@ -47,7 +54,7 @@ public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculat
         var scoresList = scores.ToList();
         
         var start = scoresList[0].Date;
-        var end = scoresList[-1].Date;
+        var end = scoresList[scoresList.Count - 1].Date;
         var scoresCounter = scoresList.Count;
         
         var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
@@ -82,7 +89,19 @@ public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculat
         var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
         var userRepository = new UserRepository(dbContext);
-        await userRepository.CreateBulkAsync(users, ct);
+        var existingUserIds = await userRepository
+            .GetAll()
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => u.Id)
+            .ToListAsync(ct);
+        
+        // update old users first
+        var usersToUpdate = users.Where(u => existingUserIds.Contains(u.Id)).ToList();
+        await userRepository.UpdateBulkAsync(usersToUpdate, ct);
+        
+        // then create new users
+        var newUsers = users.Where(u => !existingUserIds.Contains(u.Id)).ToList();
+        await userRepository.CreateBulkAsync(newUsers, ct);
     }
     
     /// <summary>
@@ -96,19 +115,39 @@ public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculat
         const int batchSize = 50;
         var beatmaps = new List<APIBeatmap>();
         
-        if (beatmapIds.Count() > 0)
+        var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
+        var beatmapRepository = new BeatmapRepository(dbContext);
+        
+        var existingBeatmapIds = await beatmapRepository
+            .GetAll()
+            .Where(b => beatmapIds.Contains(b.Id))
+            .Select(b => b.Id)
+            .ToListAsync(ct);
+        
+        var newBeatmapIds = beatmapIds.Where(id => !existingBeatmapIds.Contains(id));
+        
+        if (newBeatmapIds.Count() > 0)
         {
-            for (int i = 0; i < beatmapIds.Count(); i += batchSize)
+            for (int i = 0; i < newBeatmapIds.Count(); i += batchSize)
             {
-                var batch = beatmapIds.Skip(i).Take(batchSize).ToList();
+                var batch = newBeatmapIds.Skip(i).Take(batchSize).ToList();
                 APIBeatmap[] beatmapData = await osuApiService.GetBeatmapsAsync(batch, ct);
                 beatmaps.AddRange(beatmapData);
             }
         }
-        
-        var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var beatmapRepository = new BeatmapRepository(dbContext);
+        // create new maps
         await beatmapRepository.CreateBulkAsync(beatmaps, ct);
+    }
+
+    private void ProcessModAcronyms(IEnumerable<Score> scores)
+    {
+        foreach (var score in scores)
+        {
+            var modAcronyms = new List<string>();
+            foreach (var mod in score.Mods)
+                modAcronyms.Add(mod.Acronym);
+            score.ModAcronyms = modAcronyms.ToArray();
+        }
     }
 }

@@ -47,12 +47,25 @@ public class BeatmapRepository(ScoreDataContext db) : IRepository<APIBeatmap>
 
     public async Task<int> UpdateAsync(APIBeatmap beatmap, CancellationToken ct)
     {
+        var beatmapsetRepository = new BeatmapsetRepository(db);
+        var existingBeatmapsets = beatmapsetRepository.GetAll();
+        var beatmapset = existingBeatmapsets.FirstOrDefault(bs => bs.Id == beatmap.Beatmapset.Id);
+        if (beatmapset != null)
+            beatmap.Beatmapset = beatmapset;
         db.Beatmaps.Update(beatmap);
         return await db.SaveChangesAsync(ct);
     }
 
     public async Task<int> UpdateBulkAsync(IEnumerable<APIBeatmap> beatmaps, CancellationToken ct)
     {
+        var beatmapsetRepository = new BeatmapsetRepository(db);
+        var existingBeatmapsets = beatmapsetRepository.GetAll();
+        foreach (var beatmap in beatmaps)
+        {
+            var beatmapset = existingBeatmapsets.FirstOrDefault(bs => bs.Id == beatmap.Beatmapset.Id);
+            if (beatmapset != null)
+                beatmap.Beatmapset = beatmapset;
+        }
         db.Beatmaps.UpdateRange(beatmaps);
         return await db.SaveChangesAsync(ct);
     }

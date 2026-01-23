@@ -5,14 +5,14 @@ using OsuScoreStats.ApiClasses;
 using OsuScoreStats.Calculators;
 using OsuScoreStats.ScoreFetcherService;
 using System.Threading.RateLimiting;
-using Newtonsoft.Json;
 using OsuScoreStats.ApiMethods;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddDbContextFactory<ScoreDataContext>(opt =>
+builder.Services.AddPooledDbContextFactory<ScoreDataContext>(
+    opt =>
     opt.UseNpgsql(
             builder.Configuration["DefaultConnection"],
             o => o
@@ -25,7 +25,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<RateLimiter>(sp => 
     new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
     {
-        TokenLimit = 59,
+        TokenLimit = 60,
         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
         QueueLimit = 120,
         ReplenishmentPeriod = TimeSpan.FromSeconds(1),
@@ -33,6 +33,7 @@ builder.Services.AddSingleton<RateLimiter>(sp =>
         AutoReplenishment = true
     })
 );
+
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<OsuApiService>();
 builder.Services.AddSingleton<ICalculator, ScoreCalculator>();
@@ -54,12 +55,32 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/recentscores", async (ScoreMethods scoreMethods) =>
+app.MapGet("/recentscores", async (
+        ScoreMethods scoreMethods, 
+        Mode? mode,
+        string? country,
+        string[]? mandatoryMods,
+        string[]? optionalMods, 
+        CancellationToken ct) =>
     {
-        var recentScores = await scoreMethods.GetRecentScoresAsync();
-        return JsonConvert.SerializeObject(recentScores);
+        return await scoreMethods.GetRecentScoresAsync(mode, country, mandatoryMods, optionalMods, ct);
     })
     .WithName("GetRecentScores")
     .WithOpenApi();
 
+app.MapGet("/highestppscores", async (
+        ScoreMethods scoreMethods, 
+        Mode? mode, 
+        DateOnly? date,
+        string? country,
+        string[]? mandatoryMods,
+        string[]? optionalMods,
+        CancellationToken ct) =>
+    {
+        return await scoreMethods.GetHighestPpScoresAsync(mode, date, country, mandatoryMods, optionalMods, ct);
+    })
+    .WithName("GetHighestPpScores")
+    .WithOpenApi();
+
+app.MapControllers();
 app.Run();

@@ -1,5 +1,5 @@
 ﻿using osu.Game.Rulesets.Scoring;
-namespace OsuScoreStats.ApiClasses;
+namespace OsuScoreStats.OsuApi.OsuApiClasses;
 
 public class HitResultAttribute : Attribute
 {

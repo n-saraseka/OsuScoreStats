@@ -1,4 +1,4 @@
-﻿namespace OsuScoreStats.ApiClasses;
+﻿namespace OsuScoreStats.OsuApi.OsuApiClasses;
 
 public enum BeatmapStatus
 {

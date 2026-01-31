@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-namespace OsuScoreStats.ApiClasses;
+namespace OsuScoreStats.OsuApi.OsuApiClasses;
 
 public class APIBeatmap
 {

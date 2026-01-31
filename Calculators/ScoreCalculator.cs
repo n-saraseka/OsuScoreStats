@@ -9,13 +9,16 @@ using osu.Game.Rulesets.Osu;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.Taiko;
 using osu.Game.Scoring;
-using OsuScoreStats.ApiClasses;
+using OsuScoreStats.OsuApi.OsuApiClasses;
+using OsuScoreStats.OsuApi;
+
+
 using System.Reflection;
 namespace OsuScoreStats.Calculators;
 
 public class ScoreCalculator(OsuApiService osuApiService) : ICalculator
 {
-    public async Task<float> CalculateAsync(ApiClasses.Score score, CancellationToken ct)
+    public async Task<float> CalculateAsync(OsuApi.OsuApiClasses.Score score, CancellationToken ct)
     {
         // preparing necessary data
         var ruleset = GetRulesetFromScore(score);
@@ -47,7 +50,7 @@ public class ScoreCalculator(OsuApiService osuApiService) : ICalculator
     /// <param name="beatmap">Beatmap data for this score</param>
     /// <param name="ruleset">This score's Ruleset</param>
     /// <returns>The populated ScoreInfo</returns>
-    public ScoreInfo GetScoreInfo(ApiClasses.Score score, IBeatmap beatmap, Ruleset ruleset)
+    public ScoreInfo GetScoreInfo(OsuApi.OsuApiClasses.Score score, IBeatmap beatmap, Ruleset ruleset)
     {
         var scoreStatistics = ScoreStatisticsToDict(score.Statistics);
         var maximumStatistics = ScoreStatisticsToDict(score.MaximumStatistics);
@@ -85,7 +88,7 @@ public class ScoreCalculator(OsuApiService osuApiService) : ICalculator
     /// </summary>
     /// <param name="score">Score object to parse the ruleset from</param>
     /// <returns>Corresponding Ruleset object</returns>
-    public Ruleset GetRulesetFromScore(ApiClasses.Score score) {
+    public Ruleset GetRulesetFromScore(OsuApi.OsuApiClasses.Score score) {
         switch (score.Mode)
         {
             case Mode.Osu:

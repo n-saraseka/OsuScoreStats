@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using OsuScoreStats.ApiClasses;
+using OsuScoreStats.OsuApi.OsuApiClasses;
 using OsuScoreStats.DbService;
 using OsuScoreStats.DbService.Repositories;
 namespace OsuScoreStats.ApiMethods;
@@ -13,15 +13,19 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
     /// <param name="country">Country code</param>
     /// <param name="mandatoryMods">An array of mandatory mod acronyms</param>
     /// <param name="optionalMods">An array of optional mod acronyms</param>
+    /// <param name="amount">Amount of scores to return</param>
     /// <param name="ct">Cancellation token</param>
-    /// <returns>IEnumerable containing 100 most recent scores</returns>
+    /// <returns>IEnumerable containing up to 100 most recent scores</returns>
     public async Task<IEnumerable<Score>> GetRecentScoresAsync(
         Mode? mode, 
         string? country,
         string[]? mandatoryMods,
         string[]? optionalMods,
+        int? amount = 25,
         CancellationToken ct = default)
     {
+        var scoresAmount = (amount == null) ? 25 : Math.Min(100, Math.Max((int)amount, 0));
+        
         var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
         var scoreRepository = new ScoreRepository(dbContext);
         
@@ -57,7 +61,7 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
         query = query.OrderByDescending(o => o.Date)
                     .ThenByDescending(o => o.Id);
         
-        var recentScores = await query.Take(100).ToListAsync(ct);
+        var recentScores = await query.Take(scoresAmount).ToListAsync(ct);
         return recentScores;
     }
     
@@ -69,20 +73,22 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
     /// <param name="country">Country code</param>
     /// <param name="mandatoryMods">An array of mandatory mod acronyms</param>
     /// <param name="optionalMods">An array of optional mod acronyms</param>
+    /// <param name="amount">Amount of scores to return</param>
     /// <param name="ct">Cancellation token</param>
-    /// <returns></returns>
-    public async Task<IEnumerable<Score>> GetHighestPpScoresAsync(
+    /// <returns>IEnumerable containing up to 100 highest pp scores at given date</returns>
+    public async Task<IEnumerable<Score>> GetHighestScoresAsync(
         Mode? mode, 
         DateOnly? date,
         string? country,
         string[]? mandatoryMods,
         string[]? optionalMods,
+        int? amount = 25,
         CancellationToken ct = default)
     {
+        var scoresAmount = (amount == null) ? 25 : Math.Min(100, Math.Max((int)amount, 0));
+        
         var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
         var scoreRepository = new ScoreRepository(dbContext);
-        
-        
         
         var query = scoreRepository.GetAll().AsQueryable();
         
@@ -118,7 +124,7 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
                 query = query.Where(s =>
                     s.ModAcronyms.All(m => optionalMods.Contains(m)));
 
-        var recentScores = await query.OrderByDescending(s => s.PP).Take(100).ToListAsync(ct); 
+        var recentScores = await query.OrderByDescending(s => s.PP).Take(scoresAmount).ToListAsync(ct); 
         return recentScores;
     } 
 }

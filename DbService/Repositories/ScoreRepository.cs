@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OsuScoreStats.ApiClasses;
+using OsuScoreStats.OsuApi.OsuApiClasses;
 namespace OsuScoreStats.DbService.Repositories;
 
 public class ScoreRepository(ScoreDataContext db) : IRepository<Score>
@@ -17,13 +17,20 @@ public class ScoreRepository(ScoreDataContext db) : IRepository<Score>
 
     public async Task<int> CreateAsync(Score score, CancellationToken ct = default)
     {
-        db.Scores.Add(score);
+        var existingScore = db.Scores.FirstOrDefault(s => s.Id == score.Id);
+        if (existingScore == null)
+            db.Scores.Add(score);
         return await db.SaveChangesAsync(ct);
     }
 
     public async Task<int> CreateBulkAsync(IEnumerable<Score> scores, CancellationToken ct = default)
     {
-        db.Scores.AddRange(scores);
+        var existingScoreIds = await db.Scores
+            .Select(score => score.Id)
+            .Where(id => scores.Select(score => score.Id).Contains(id))
+            .ToListAsync(ct);
+        var newScores = scores.Where(score => !existingScoreIds.Contains(score.Id));
+        db.Scores.AddRange(newScores);
         return await db.SaveChangesAsync(ct);
     }
 

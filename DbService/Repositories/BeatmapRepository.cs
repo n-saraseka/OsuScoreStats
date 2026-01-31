@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OsuScoreStats.ApiClasses;
+using OsuScoreStats.OsuApi.OsuApiClasses;
 namespace OsuScoreStats.DbService.Repositories;
 
 public class BeatmapRepository(ScoreDataContext db) : IRepository<APIBeatmap>

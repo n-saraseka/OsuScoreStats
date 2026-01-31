@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OsuScoreStats.ApiClasses;
+using OsuScoreStats.OsuApi.OsuApiClasses;
 namespace OsuScoreStats.DbService.Repositories;
 
 public class UserRepository(ScoreDataContext db) : IRepository<User>

@@ -1,13 +1,17 @@
 using Newtonsoft.Json;
 using System.Text;
-using OsuScoreStats.ApiClasses;
+using OsuScoreStats.OsuApi.OsuApiClasses;
 using osu.Game.Beatmaps;
 using osu.Game.IO;
 using System.Threading.RateLimiting;
-namespace OsuScoreStats;
+namespace OsuScoreStats.OsuApi;
 
-public class OsuApiService(IHttpClientFactory httpClientFactory, IConfiguration config, RateLimiter limiter, TokenService tokenService)
+public class OsuApiService(
+    IHttpClientFactory httpClientFactory, 
+    IConfiguration config, 
+    RateLimiter limiter)
 {
+    private static TokenInfo? _token;
     private static readonly SemaphoreSlim TokenSemaphore = new(1, 1);
     
     /// <summary>
@@ -89,22 +93,18 @@ public class OsuApiService(IHttpClientFactory httpClientFactory, IConfiguration 
             ct);
 
         // writing new token data
-        var tokenData = JsonConvert.DeserializeObject<TokenInfo>(tokenResponse, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-        tokenData.ExpiresIn += seconds;
-        tokenService.SetToken(tokenData);
+        _token = JsonConvert.DeserializeObject<TokenInfo>(tokenResponse, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+        _token.ExpiresIn += seconds;
     }
     
     /// <summary>
     /// Get scores from the API firehose
     /// </summary>
     /// <param name="cursor">Cursor string (used to fetch new scores since last call)</param>
-    /// <param name="ruleset">Ruleset name (osu, mania, taiko, fruits)</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Populated ScoresResponse object with the cursor string and array of Scores</returns>
-    public async Task<IEnumerable<Score>> GetScoresAsync(CancellationToken ct = default)
+    public async Task<ScoresResponse> GetScoresAsync(string? cursor, CancellationToken ct = default)
     {
-        var cursor = config["CursorString"];
-        
         var scoresResponse = await SendRequestAsync(HttpMethod.Get, 
             $"{config["BaseApiUrl"]}/scores?cursor_string={cursor}", 
             null, 
@@ -113,9 +113,7 @@ public class OsuApiService(IHttpClientFactory httpClientFactory, IConfiguration 
 
         var scores = JsonConvert.DeserializeObject<ScoresResponse>(scoresResponse, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
         
-        config["CursorString"] = scores.Cursor;
-        
-        return scores.Scores;
+        return scores;
     }
     
     /// <summary>
@@ -224,17 +222,11 @@ public class OsuApiService(IHttpClientFactory httpClientFactory, IConfiguration 
         await TokenSemaphore.WaitAsync(ct);
         try
         {
-            var tokenData = tokenService.GetToken();
             var seconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-            if (tokenData == null || seconds > tokenData.ExpiresIn - 60)
-                
-            {
+            if (_token == null || seconds > _token.ExpiresIn - 60)
                 await SetTokenAsync(ct);
-                tokenData = tokenService.GetToken();
-            }
-            
-            return tokenData;
+            return _token;
         }
         finally
         {

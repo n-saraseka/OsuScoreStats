@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel;
-namespace OsuScoreStats.ApiClasses;
+namespace OsuScoreStats.OsuApi.OsuApiClasses;
 
 public enum Grade
 {

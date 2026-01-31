@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using osu.Game.Online.API;
-namespace OsuScoreStats.ApiClasses;
+namespace OsuScoreStats.OsuApi.OsuApiClasses;
 
 public class Score
 {
@@ -39,4 +39,5 @@ public class Score
     public int LegacyTotalScore { get; set; }
     [JsonProperty("pp")]
     public float? PP { get; set; }
+    public int? MapRank { get; set; }
 }

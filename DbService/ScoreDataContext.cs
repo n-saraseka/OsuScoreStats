@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using osu.Game.Online.API;
-using OsuScoreStats.ApiClasses;
+using OsuScoreStats.OsuApi.OsuApiClasses;
 using OsuScoreStats.DbService.EntityConfigurations;
 namespace OsuScoreStats.DbService;
 

@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using OsuScoreStats.ApiClasses;
+using OsuScoreStats.OsuApi.OsuApiClasses;
 using OsuScoreStats.Calculators;
 using OsuScoreStats.DbService;
 using OsuScoreStats.DbService.Repositories;
+using OsuScoreStats.OsuApi;
 namespace OsuScoreStats.ScoreFetcherService;
 
 public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculator, IDbContextFactory<ScoreDataContext> dbContextFactory) : IScoreFetcher
@@ -10,12 +11,13 @@ public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculat
     /// <summary>
     /// Get scores from the API firehose
     /// </summary>
+    /// <param name="cursor">Cursor string</param>
     /// <param name="ct">Cancellation token</param>
-    /// <returns>IEnumerable containing populated Score objects</returns>
-    public async Task<IEnumerable<Score>> GetScoresAsync(CancellationToken ct = default)
+    /// <returns>Populated ScoresResponse object</returns>
+    public async Task<ScoresResponse> GetScoresAsync(string? cursor, CancellationToken ct = default)
     {
-        var scores = await osuApiService.GetScoresAsync(ct);
-        ProcessModAcronyms(scores);
+        var scores = await osuApiService.GetScoresAsync(cursor, ct);
+        ProcessModAcronyms(scores.Scores);
         return scores;
     }
     /// <summary>

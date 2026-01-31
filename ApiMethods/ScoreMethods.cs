@@ -7,66 +7,7 @@ namespace OsuScoreStats.ApiMethods;
 public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
 {
     /// <summary>
-    /// Get recently fetched scores
-    /// </summary>
-    /// <param name="mode">Gameplay mode (Osu, Taiko, Fruits, Mania)</param>
-    /// <param name="country">Country code</param>
-    /// <param name="mandatoryMods">An array of mandatory mod acronyms</param>
-    /// <param name="optionalMods">An array of optional mod acronyms</param>
-    /// <param name="amount">Amount of scores to return</param>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>IEnumerable containing up to 100 most recent scores</returns>
-    public async Task<IEnumerable<Score>> GetRecentScoresAsync(
-        Mode? mode, 
-        string? country,
-        string[]? mandatoryMods,
-        string[]? optionalMods,
-        int? amount = 25,
-        CancellationToken ct = default)
-    {
-        var scoresAmount = (amount == null) ? 25 : Math.Min(100, Math.Max((int)amount, 0));
-        
-        var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
-        var scoreRepository = new ScoreRepository(dbContext);
-        
-        var query = scoreRepository.GetAll().AsQueryable();
-        if (mode.HasValue)
-            query = query.Where(s => s.Mode == mode.Value);
-
-        if (country != null)
-        {
-            var userRepository = new UserRepository(dbContext);
-            var userIdsThisCountry = await userRepository
-                .GetAll()
-                .Where(u => u.CountryCode == country)
-                .Select(u => u.Id).Distinct()
-                .ToListAsync(ct);
-            query = query.Where(s => userIdsThisCountry.Contains(s.UserId));
-        }
-
-        if (mandatoryMods?.Length > 0)
-            if (optionalMods?.Length > 0)
-                query = query.Where(s =>
-                    mandatoryMods.All(m => s.ModAcronyms.Contains(m)) &&
-                    s.ModAcronyms.All(m => mandatoryMods.Contains(m) || optionalMods.Contains(m)));
-            else
-                query = query.Where(s =>
-                    mandatoryMods.All(m => s.ModAcronyms.Contains(m)) &&
-                    s.ModAcronyms.All(m => mandatoryMods.Contains(m)));
-        else
-        if (optionalMods?.Length > 0)
-            query = query.Where(s =>
-                s.ModAcronyms.All(m => optionalMods.Contains(m)));
-        
-        query = query.OrderByDescending(o => o.Date)
-                    .ThenByDescending(o => o.Id);
-        
-        var recentScores = await query.Take(scoresAmount).ToListAsync(ct);
-        return recentScores;
-    }
-    
-    /// <summary>
-    /// Get highest PP scores
+    /// Get scores
     /// </summary>
     /// <param name="mode">Gameplay mode (Osu, Taiko, Fruits, Mania)</param>
     /// <param name="date">Date to get scores from (defaults to latest date in scores table)</param>
@@ -74,15 +15,19 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
     /// <param name="mandatoryMods">An array of mandatory mod acronyms</param>
     /// <param name="optionalMods">An array of optional mod acronyms</param>
     /// <param name="amount">Amount of scores to return</param>
+    /// <param name="sort">Parameter to sort by</param>
+    /// <param name="isDesc">Whether sort is descending or not</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>IEnumerable containing up to 100 highest pp scores at given date</returns>
-    public async Task<IEnumerable<Score>> GetHighestScoresAsync(
+    public async Task<IEnumerable<Score>> GetScoresAsync(
         Mode? mode, 
         DateOnly? date,
         string? country,
         string[]? mandatoryMods,
         string[]? optionalMods,
         int? amount = 25,
+        string? sort = "pp",
+        bool isDesc = true,
         CancellationToken ct = default)
     {
         var scoresAmount = (amount == null) ? 25 : Math.Min(100, Math.Max((int)amount, 0));
@@ -124,7 +69,40 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
                 query = query.Where(s =>
                     s.ModAcronyms.All(m => optionalMods.Contains(m)));
 
-        var recentScores = await query.OrderByDescending(s => s.PP).Take(scoresAmount).ToListAsync(ct); 
+        var recentScores = new List<Score>();
+
+        if (isDesc)
+        {
+            switch (sort)
+            {
+                case "totalScore":
+                    recentScores = await query.OrderByDescending(s => s.TotalScore).Take(scoresAmount).ToListAsync(ct);
+                    break;
+                case "date":
+                    recentScores = await query.OrderByDescending(s => s.Date).Take(scoresAmount).ToListAsync(ct);
+                    break;
+                default:
+                    recentScores = await query.OrderByDescending(s => s.PP).Take(scoresAmount).ToListAsync(ct);
+                    break;
+            }
+        }
+        
+        else
+        {
+            switch (sort)
+            {
+                case "totalScore":
+                    recentScores = await query.OrderBy(s => s.TotalScore).Take(scoresAmount).ToListAsync(ct);
+                    break;
+                case "date":
+                    recentScores = await query.OrderBy(s => s.Date).Take(scoresAmount).ToListAsync(ct);
+                    break;
+                default:
+                    recentScores = await query.OrderBy(s => s.PP).Take(scoresAmount).ToListAsync(ct);
+                    break;
+            }
+        }
+        
         return recentScores;
     } 
 }

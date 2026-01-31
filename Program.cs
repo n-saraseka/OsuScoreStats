@@ -62,21 +62,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 
-app.MapGet("/recentscores", async (
-        ScoreMethods scoreMethods, 
-        Mode? mode,
-        string? country,
-        string[]? mandatoryMods,
-        string[]? optionalMods,
-        int? amount,
-        CancellationToken ct) =>
-    {
-        return await scoreMethods.GetRecentScoresAsync(mode, country, mandatoryMods, optionalMods, amount, ct);
-    })
-    .WithName("GetRecentScores")
-    .WithOpenApi();
-
-app.MapGet("/highestppscores", async (
+app.MapGet("/scores", async (
         ScoreMethods scoreMethods, 
         Mode? mode, 
         DateOnly? date,
@@ -84,11 +70,13 @@ app.MapGet("/highestppscores", async (
         string[]? mandatoryMods,
         string[]? optionalMods,
         int? amount,
+        string? sort,
+        bool isDesc,
         CancellationToken ct) =>
     {
-        return await scoreMethods.GetHighestScoresAsync(mode, date, country, mandatoryMods, optionalMods, amount, ct);
+        return await scoreMethods.GetScoresAsync(mode, date, country, mandatoryMods, optionalMods, amount, sort, isDesc, ct);
     })
-    .WithName("GetHighestPpScores")
+    .WithName("GetScores")
     .WithOpenApi();
 
 app.MapGet("/beatmap", async (

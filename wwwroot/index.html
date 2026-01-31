@@ -21,9 +21,20 @@
                 <option value="condensed">Condensed</option>
             </select>
         </label>
-        <div class="scores">
-
-        </div>
+        <label for="scores-sort">Sort by:
+            <select name="scores-sort" id="scores-sort">
+                <option value="pp">PP</option>
+                <option value="totalScore">Score</option>
+                <option value="date">Date and time set</option>
+            </select>
+        </label>
+        <label for="scores-sort-direction">Sort direction:
+            <select name="scores-sort-direction" id="scores-sort-direction">
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+            </select>
+        </label>
+        <div class="scores"></div>
         <table class="scores-table">
             <thead>
             <tr>
@@ -79,14 +90,33 @@
             currentView = viewSelect.value;
             switchView();
         })
+
+        sortSelect = document.querySelector("#scores-sort");
+        let currentSort = sortSelect.value;
+        sortSelect.addEventListener("change", () => {
+            currentSort = sortSelect.value;
+            fillWithData(0, 100, currentSort, (currentDirection === "desc"));
+        });
+
+        sortDirectionSelect = document.querySelector("#scores-sort-direction");
+        let currentDirection = sortDirectionSelect.value;
+        sortDirectionSelect.addEventListener("change", () => {
+            currentDirection = sortDirectionSelect.value;
+            fillWithData(0, 100, currentSort, (currentDirection === "desc"));
+        });
         
         function getModClass(mod) {
             return modCategories[mod] || "unknown";
         }
         
         // Get recent scores
-        async function getScores(mode = 0, amount = 100) {
-            const response = await fetch(`/highestppscores?mode=${mode}&amount=100`, {
+        async function getScores(mode = 0, amount = 100, sort = "pp", isDesc = true) {
+            const params = new URLSearchParams();
+            params.append("mode", mode.toString());
+            params.append("amount", amount.toString());
+            params.append("sort", sort);
+            params.append("isDesc", isDesc.toString());
+            const response = await fetch("/scores?" + params.toString(), {
                 method: "GET",
                 headers: { "Accept": "application/json" },
             });
@@ -280,8 +310,15 @@
             return scoreTr;
         }
         
-        async function fillWithData() {
-            const scores = await getScores();
+        function clearData() {
+            const scoresGrid = document.querySelector(".scores");
+            const scoresTable = document.querySelector(".scores-table tbody");
+            scoresGrid.innerHTML = "";
+            scoresTable.innerHTML = "";
+        }
+        
+        async function fillWithData(mode = 0, amount = 100, sort = "pp", isDesc = true) {
+            const scores = await getScores(mode, amount, sort, isDesc);
             
             let userIds = [];
             scores.forEach(score => userIds.push(score.userId));
@@ -297,6 +334,7 @@
             
             const scoresGrid = document.querySelector(".scores");
             const scoresTable = document.querySelector(".scores-table tbody");
+            clearData();
             scores.forEach(score => {
                     scoresGrid.append(gridScore(
                         score,

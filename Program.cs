@@ -37,7 +37,7 @@ builder.Services.AddSingleton<RateLimiter>(sp =>
 builder.Services.AddSingleton<OsuApiService>();
 builder.Services.AddSingleton<ICalculator, ScoreCalculator>();
 builder.Services.AddSingleton<IScoreFetcher, ScoreFetcher>();
-//builder.Services.AddHostedService<ScoreWorker>();
+builder.Services.AddHostedService<LeaderboardWorker>();
 builder.Services.AddScoped<ScoreMethods>();
 builder.Services.AddScoped<BeatmapMethods>();
 builder.Services.AddScoped<UserMethods>();
@@ -65,7 +65,8 @@ app.UseHttpsRedirection();
 app.MapGet("/scores", async (
         ScoreMethods scoreMethods, 
         Mode? mode, 
-        DateOnly? date,
+        DateOnly? dateStart,
+        DateOnly? dateEnd,
         string? country,
         string[]? mandatoryMods,
         string[]? optionalMods,
@@ -74,7 +75,8 @@ app.MapGet("/scores", async (
         bool isDesc,
         CancellationToken ct) =>
     {
-        return await scoreMethods.GetScoresAsync(mode, date, country, mandatoryMods, optionalMods, amount, sort, isDesc, ct);
+        return await scoreMethods.GetScoresAsync(
+            mode, dateStart, dateEnd, country, mandatoryMods, optionalMods, amount, sort, isDesc, ct);
     })
     .WithName("GetScores")
     .WithOpenApi();

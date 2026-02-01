@@ -10,7 +10,8 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
     /// Get scores
     /// </summary>
     /// <param name="mode">Gameplay mode (Osu, Taiko, Fruits, Mania)</param>
-    /// <param name="date">Date to get scores from (defaults to latest date in scores table)</param>
+    /// <param name="dateStart">Date to begin getting scores from (defaults to latest date in scores table)</param>
+    /// <param name="dateEnd">Date to end getting scores from (defaults to latest date in scores table)</param>
     /// <param name="country">Country code</param>
     /// <param name="mandatoryMods">An array of mandatory mod acronyms</param>
     /// <param name="optionalMods">An array of optional mod acronyms</param>
@@ -21,7 +22,8 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
     /// <returns>IEnumerable containing up to 100 highest pp scores at given date</returns>
     public async Task<IEnumerable<Score>> GetScoresAsync(
         Mode? mode, 
-        DateOnly? date,
+        DateOnly? dateStart,
+        DateOnly? dateEnd,
         string? country,
         string[]? mandatoryMods,
         string[]? optionalMods,
@@ -38,8 +40,10 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
         var query = scoreRepository.GetAll().AsQueryable();
         
         var latestDate = await query.MaxAsync(s => s.Date, ct);
-        var targetDate = date ?? DateOnly.FromDateTime(latestDate);
-        query = query.Where(s => DateOnly.FromDateTime(s.Date).Equals(targetDate));
+        var targetStartDate = dateStart ?? DateOnly.FromDateTime(latestDate);
+        var targetEndDate = dateEnd ?? DateOnly.FromDateTime(latestDate);
+        query = query.Where(s => 
+            DateOnly.FromDateTime(s.Date) >= targetStartDate && DateOnly.FromDateTime(s.Date) <= targetEndDate);
         
         if (mode.HasValue)
             query = query.Where(s => s.Mode == mode.Value);

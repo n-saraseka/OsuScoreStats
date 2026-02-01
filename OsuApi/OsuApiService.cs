@@ -96,6 +96,25 @@ public class OsuApiService(
         _token = JsonConvert.DeserializeObject<TokenInfo>(tokenResponse, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
         _token.ExpiresIn += seconds;
     }
+
+    /// <summary>
+    /// Get beatmapsets from the API beatmapsets search endpoint (sorted by date ranked, ascending)
+    /// </summary>
+    /// <param name="cursor">Cursor string</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Populated BeatmapsetsResponse object</returns>
+    public async Task<BeatmapsetsResponse> GetBeatmapsetsAsync(string? cursor, CancellationToken ct = default)
+    {
+        var beatmapsetsResponse = await SendRequestAsync(HttpMethod.Get, 
+            $"{config["BaseApiUrl"]}/beatmapsets/search?sort=ranked_asc&cursor_string={cursor}", 
+            null, 
+            false, 
+            ct);
+        
+        var beatmapsets = JsonConvert.DeserializeObject<BeatmapsetsResponse>(beatmapsetsResponse, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+        return beatmapsets;
+    }
     
     /// <summary>
     /// Get scores from the API firehose

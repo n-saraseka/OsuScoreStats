@@ -44,7 +44,7 @@ const sortSelect = document.querySelector("#scores-sort");
 let currentSort = sortSelect.value;
 sortSelect.addEventListener("change", async () => {
     currentSort = sortSelect.value;
-    await fillWithData(0, 100, currentSort, (currentDirection === "desc"));
+    await fillWithData(0, 100, currentDateStart, today, currentSort, (currentDirection === "desc"));
 });
 
 // sort direction (desc or asc)
@@ -52,21 +52,53 @@ const sortDirectionSelect = document.querySelector("#scores-sort-direction");
 let currentDirection = sortDirectionSelect.value;
 sortDirectionSelect.addEventListener("change", async () => {
     currentDirection = sortDirectionSelect.value;
-    await fillWithData(0, 100, currentSort, (currentDirection === "desc"));
+    await fillWithData(0, 100, currentDateStart, today, currentSort, (currentDirection === "desc"));
 });
+
+const dateRangeSelect = document.querySelector("#date-range");
+const today = new Date();
+let currentDateStart = new Date();
+
+dateRangeSelect.addEventListener("change", async () => {
+    currentDateStart =  new Date();
+    switch (dateRangeSelect.value) {
+        case "last-week":
+            currentDateStart.setDate(currentDateStart.getDate() - 7);
+            break;
+        case "last-month":
+            currentDateStart.setMonth(currentDateStart.getMonth() - 1);
+            break;
+        case "last-year":
+            currentDateStart.setFullYear(currentDateStart.getFullYear() - 1);
+            break;
+        default:
+            break;
+    }
+    await fillWithData(0, 100, currentDateStart, today, currentSort, (currentDirection === "desc"));
+})
+
 
 // Get mod category based on mod acronym
 function getModCategory(mod) {
     return modCategories[mod] || "unknown";
 }
 
+function getDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
 // Get scores from the API
-async function getScores(mode = 0, amount = 100, sort = "pp", isDesc = true) {
+async function getScores(mode = 0, amount = 100, dateStart = currentDateStart, dateEnd = today, sort = "pp", isDesc = true) {
     const params = new URLSearchParams();
     params.append("mode", mode.toString());
     params.append("amount", amount.toString());
     params.append("sort", sort);
     params.append("isDesc", isDesc.toString());
+    params.append("dateStart", getDateString(dateStart));
+    params.append("dateEnd", getDateString(dateEnd));
     const response = await fetch("/scores?" + params.toString(), {
         method: "GET",
         headers: { "Accept": "application/json" },
@@ -173,7 +205,7 @@ function gridScore(score, user, beatmap, beatmapset) {
     mods.classList.add("score-mods");
     score.modAcronyms.forEach(mod => {
         const modSpan = document.createElement("span");
-        modSpan.classList.add("mod", `mod-${getModCategory(mod)}`);
+        modSpan.classList.add("mod", `mod-${getModCategory(mod.substring(0, 2))}`);
         modSpan.innerText = mod;
         mods.appendChild(modSpan);
     });
@@ -275,8 +307,9 @@ function clearData() {
 }
 
 // fill page with score data
-async function fillWithData(mode = 0, amount = 100, sort = "pp", isDesc = true) {
-    const scores = await getScores(mode, amount, sort, isDesc);
+async function fillWithData(mode = 0, amount = 100, dateStart = currentDateStart, dateEnd = today, sort = "pp", isDesc = true) {
+    console.log(dateStart, dateEnd);
+    const scores = await getScores(mode, amount, dateStart, dateEnd, sort, isDesc);
 
     let userIds = [];
     scores.forEach(score => userIds.push(score.userId));

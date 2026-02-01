@@ -9,6 +9,52 @@ namespace OsuScoreStats.ScoreFetcherService;
 public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculator, IDbContextFactory<ScoreDataContext> dbContextFactory) : IScoreFetcher
 {
     /// <summary>
+    /// Get beatmapsets from the API search endpoint
+    /// </summary>
+    /// <param name="cursor">Cursor string</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Populated BeatmapsetsResponse object</returns>
+    public async Task<BeatmapsetsResponse> GetBeatmapsetsAsync(string? cursor, CancellationToken ct = default)
+    {
+        var beatmapsets = await osuApiService.GetBeatmapsetsAsync(cursor, ct);
+        
+        var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
+        BeatmapsetRepository beatmapsetRepository = new(dbContext);
+        await beatmapsetRepository.CreateBulkAsync(beatmapsets.Beatmapsets, ct);
+        
+        return beatmapsets;
+    }
+
+    public async Task<BeatmapScores> GetBeatmapScoresAsync(APIBeatmap beatmap, Mode? mode, int legacyOnly = 0, CancellationToken ct = default)
+    {
+        var scores = await osuApiService.GetBeatmapScoresAsync(beatmap.Id, mode, legacyOnly, ct); 
+        var dbContext = await dbContextFactory.CreateDbContextAsync(ct);
+        
+        BeatmapRepository beatmapRepository = new(dbContext);
+        await beatmapRepository.CreateAsync(beatmap, ct);
+        
+        var users = scores.Scores.Select(s => s.User).Distinct().ToList();
+        UserRepository userRepository = new(dbContext);
+        await userRepository.CreateBulkAsync(users, ct);
+        
+        ScoreRepository scoreRepository = new(dbContext);
+        ProcessModAcronyms(scores.Scores);
+
+        var unrankedScores = scores.Scores.Where(s => s.PP == null);
+        var rankedScores =  scores.Scores.Where(s => s.PP != null);
+
+        var scoreTasks = new List<Task>();
+        
+        scoreTasks.Add(ProcessRankedScoresAsync(rankedScores, ct));
+        if (unrankedScores.Count() > 0)
+            scoreTasks.Add(ProcessUnrankedScoresAsync(unrankedScores, ct));
+        
+        await Task.WhenAll(scoreTasks);
+
+        return scores;
+    }
+    
+    /// <summary>
     /// Get scores from the API firehose
     /// </summary>
     /// <param name="cursor">Cursor string</param>
@@ -148,7 +194,13 @@ public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculat
         {
             var modAcronyms = new List<string>();
             foreach (var mod in score.Mods)
-                modAcronyms.Add(mod.Acronym);
+            {
+                var acronym = mod.Acronym;
+                if (mod.Settings.ContainsKey("speed_change"))
+                    acronym += $"({mod.Settings["speed_change"]}x)";
+                modAcronyms.Add(acronym);
+            }
+                
             score.ModAcronyms = modAcronyms.ToArray();
         }
     }

@@ -124,11 +124,11 @@ public class OsuApiService(
     /// <param name="legacyOnly">Whether to exclude lazer scores or not (0 = include, 1 = exclude)</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Populated BeatmapScores object</returns>
-    public async Task<BeatmapScores> GetBeatmapScoresAsync(int beatmapId, string? mode, int legacyOnly = 0, CancellationToken ct = default)
+    public async Task<BeatmapScores> GetBeatmapScoresAsync(int beatmapId, Mode? mode, int legacyOnly = 0, CancellationToken ct = default)
     {
         legacyOnly = (legacyOnly < 0 || legacyOnly > 1) ? 0 : legacyOnly;
         var queryString = $"legacy_only={legacyOnly}";
-        if (mode != null) queryString += $"&mode={mode}";
+        if (mode != null) queryString += $"&mode={mode.ToString().ToLower()}";
         
         var scoresResponse = await SendRequestAsync(HttpMethod.Get, 
             $"{config["BaseApiUrl"]}/beatmaps/{beatmapId}/scores?{queryString}", 

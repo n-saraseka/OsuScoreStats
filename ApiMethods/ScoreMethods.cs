@@ -121,7 +121,7 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
 
             for (int i = 0; i < scoresOnThisBeatmap.Count; i++)
             {
-                scoresOnThisBeatmap[i].MapRank = allScoresOnThisBeatmap.IndexOf(scoresOnThisBeatmap
+                scoresOnThisBeatmap[i].MapRank = allScoresOnThisBeatmap.IndexOf(allScoresOnThisBeatmap
                     .Find(s => s.Id == scoresOnThisBeatmap[i].Id)) + 1;
             }
 

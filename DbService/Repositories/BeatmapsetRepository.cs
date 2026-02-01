@@ -17,13 +17,20 @@ public class BeatmapsetRepository(ScoreDataContext db) : IRepository<Beatmapset>
 
         public async Task<int> CreateAsync(Beatmapset beatmapset, CancellationToken ct = default)
         {
-            db.Beatmapsets.Add(beatmapset);
+            var existingBeatmapset = db.Beatmapsets.FirstOrDefault(bs => bs.Id == beatmapset.Id);
+            if (existingBeatmapset == null)
+                db.Beatmapsets.Add(beatmapset);
             return await db.SaveChangesAsync(ct);
         }
 
         public async Task<int> CreateBulkAsync(IEnumerable<Beatmapset> beatmapsets, CancellationToken ct = default)
         {
-            db.Beatmapsets.AddRange(beatmapsets);
+            var existingBeatmapsetIds = await db.Beatmapsets
+                .Select(bs => bs.Id)
+                .Where(id => beatmapsets.Select(bs => bs.Id).Contains(id))
+                .ToListAsync(ct);
+            var newBeatmapsets = beatmapsets.Where(bs => !existingBeatmapsetIds.Contains(bs.Id));
+            db.Beatmapsets.AddRange(newBeatmapsets);
             return await db.SaveChangesAsync(ct);
         }
 

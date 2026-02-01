@@ -17,13 +17,20 @@ public class CountryRepository(ScoreDataContext db)
 
     public async Task<int> CreateAsync(Country country, CancellationToken ct = default)
     {
-        db.Countries.Add(country);
+        var existingCountry = db.Countries.FirstOrDefault(c => c.Code == country.Code);
+        if (existingCountry == null) 
+            db.Countries.Add(country);
         return await db.SaveChangesAsync(ct);
     }
 
     public async Task<int> CreateBulkAsync(IEnumerable<Country> countries, CancellationToken ct = default)
     {
-        db.Countries.AddRange(countries);
+        var existingCountries = await db.Countries
+            .Select(c => c.Code)
+            .Where(code => countries.Select(c => c.Code).Contains(code))
+            .ToListAsync(ct);
+        var newCountries = countries.Where(c => !existingCountries.Contains(c.Code));
+        db.Countries.AddRange(newCountries);
         return await db.SaveChangesAsync(ct);
     }
 

@@ -17,10 +17,12 @@ public class BeatmapRepository(ScoreDataContext db) : IRepository<APIBeatmap>
 
     public async Task<int> CreateAsync(APIBeatmap beatmap, CancellationToken ct = default)
     {
-        var beatmapsetRepository = new BeatmapsetRepository(db);
-        var beatmapset = await beatmapsetRepository.GetAsync(beatmap.BeatmapsetId, ct);
-        if (beatmapset == null)
+        if (beatmap.Beatmapset != null)
+        {
+            var beatmapsetRepository = new BeatmapsetRepository(db);
             await beatmapsetRepository.CreateAsync(beatmap.Beatmapset, ct);
+        }
+        
         db.Beatmaps.Add(beatmap);
         return await db.SaveChangesAsync(ct);
     }

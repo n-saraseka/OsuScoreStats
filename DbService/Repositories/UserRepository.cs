@@ -18,10 +18,11 @@ public class UserRepository(ScoreDataContext db) : IRepository<User>
     public async Task<int> CreateAsync(User user, CancellationToken ct = default)
     {
         var countryRepository = new CountryRepository(db);
-        var userCountry = await countryRepository.GetAsync(user.CountryCode, ct);
-        if (userCountry == null)
-            await countryRepository.CreateAsync(user.Country, ct);
-        db.Users.Add(user);
+        await countryRepository.CreateAsync(user.Country, ct);
+        
+        var existingUser = db.Users.FirstOrDefault(u => u.Id == user.Id);
+        if (existingUser == null)
+            db.Users.Add(user);
         return await db.SaveChangesAsync(ct);
     }
 
@@ -32,16 +33,21 @@ public class UserRepository(ScoreDataContext db) : IRepository<User>
             .GroupBy(u => u.CountryCode)
             .Select(g => g.First().Country)
             .ToList();
-        var existingCountryCodes = countryRepository.GetAll().Select(c => c.Code).ToList();
-        var newCountries = userCountries.Where(c => !existingCountryCodes.Contains(c.Code)).ToList();
-        if (newCountries.Count > 0)
-            await countryRepository.CreateBulkAsync(newCountries, ct);
+        await countryRepository.CreateBulkAsync(userCountries, ct);
 
         var existingCountries = countryRepository.GetAll();
         foreach (var user in users)
             user.Country = existingCountries.FirstOrDefault(c => c.Code == user.Country.Code);
+        
+        var existingUsers = await db.Users
+            .Select(u => u.Id)
+            .Where(id => users.Select(u => u.Id).Contains(id))
+            .ToListAsync(ct);
+        var newUsers = users.Where(u => !existingUsers.Contains(u.Id));
+        var usersToUpdate = users.Where(u => existingUsers.Contains(u.Id));
 
-        db.Users.AddRange(users);
+        db.Users.UpdateRange(usersToUpdate);
+        db.Users.AddRange(newUsers);
         return await db.SaveChangesAsync(ct);
     }
 

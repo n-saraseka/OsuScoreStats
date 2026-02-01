@@ -142,7 +142,7 @@ function gridScore(score, user, beatmap, beatmapset) {
 
     const rank = document.createElement("strong");
     rank.classList.add("score-rank");
-    rank.innerText = "#1";
+    rank.innerText = `#${score.mapRank}`;
 
     const pp = document.createElement("strong");
     pp.classList.add("score-pp");

@@ -16,6 +16,9 @@ public class Score
     public Mode Mode { get; set; }
     [JsonProperty("beatmap_id")]
     public int BeatmapId { get; set; }
+    [JsonProperty("user")]
+    [NotMapped]
+    public User User { get; set; }
     [JsonProperty("user_id")]
     public int UserId { get; set; }
     [JsonProperty("rank")]
@@ -39,5 +42,4 @@ public class Score
     public int LegacyTotalScore { get; set; }
     [JsonProperty("pp")]
     public float? PP { get; set; }
-    public int? MapRank { get; set; }
 }

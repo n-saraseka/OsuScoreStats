@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
 namespace OsuScoreStats.OsuApi.OsuApiClasses;
 
 public class Beatmapset
@@ -12,5 +13,6 @@ public class Beatmapset
     [JsonProperty("preview_url")]
     public string PreviewUrl { get; set; }
     [JsonProperty("beatmaps")]
+    [NotMapped]
     public APIBeatmap[] Beatmaps { get; set; } = Array.Empty<APIBeatmap>();
 }

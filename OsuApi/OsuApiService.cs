@@ -115,6 +115,31 @@ public class OsuApiService(
 
         return beatmapsets;
     }
+
+    /// <summary>
+    /// Get beatmap scores from the API
+    /// </summary>
+    /// <param name="beatmapId">Beatmap ID</param>
+    /// <param name="mode">Ruleset (osu, taiko, fruits, mania)</param>
+    /// <param name="legacyOnly">Whether to exclude lazer scores or not (0 = include, 1 = exclude)</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Populated BeatmapScores object</returns>
+    public async Task<BeatmapScores> GetBeatmapScoresAsync(int beatmapId, string? mode, int legacyOnly = 0, CancellationToken ct = default)
+    {
+        legacyOnly = (legacyOnly < 0 || legacyOnly > 1) ? 0 : legacyOnly;
+        var queryString = $"legacy_only={legacyOnly}";
+        if (mode != null) queryString += $"&mode={mode}";
+        
+        var scoresResponse = await SendRequestAsync(HttpMethod.Get, 
+            $"{config["BaseApiUrl"]}/beatmaps/{beatmapId}/scores?{queryString}", 
+            null, 
+            false, 
+            ct);
+        
+        var scores = JsonConvert.DeserializeObject<BeatmapScores>(scoresResponse, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
+        return scores;
+    }
     
     /// <summary>
     /// Get scores from the API firehose

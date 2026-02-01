@@ -23,7 +23,9 @@ public class BeatmapRepository(ScoreDataContext db) : IRepository<APIBeatmap>
             await beatmapsetRepository.CreateAsync(beatmap.Beatmapset, ct);
         }
         
-        db.Beatmaps.Add(beatmap);
+        var existingBeatmap = db.Beatmaps.FirstOrDefault(b => b.Id == beatmap.Id);
+        if (existingBeatmap == null)
+            db.Beatmaps.Add(beatmap);
         return await db.SaveChangesAsync(ct);
     }
 
@@ -34,10 +36,7 @@ public class BeatmapRepository(ScoreDataContext db) : IRepository<APIBeatmap>
             .GroupBy(b => b.BeatmapsetId)
             .Select(g => g.First().Beatmapset)
             .ToList();
-        var existingBeatmapsetIds = beatmapsetRepository.GetAll().Select(bs => bs.Id).ToList();
-        var newBeatmapsets = beatmapsets.Where(bs => !existingBeatmapsetIds.Contains(bs.Id)).ToList();
-        if (newBeatmapsets.Count > 0)
-            await beatmapsetRepository.CreateBulkAsync(newBeatmapsets, ct);
+        await beatmapsetRepository.CreateBulkAsync(beatmapsets, ct);
 
         var existingBeatmapsets = beatmapsetRepository.GetAll();
         foreach (var beatmap in beatmaps)

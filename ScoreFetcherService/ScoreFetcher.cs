@@ -110,7 +110,7 @@ public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculat
         var scoreRepository = new ScoreRepository(dbContext);
         await scoreRepository.CreateBulkAsync(scoresList, ct);
         
-        Console.WriteLine($"Saved {scoresCounter} unranked scores between {start} and {end} to the DB.");
+        Console.WriteLine($"Saved {scoresCounter} ranked scores between {start} and {end} to the DB.");
     }
     
     /// <summary>

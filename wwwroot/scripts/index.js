@@ -180,8 +180,9 @@ function gridScore(score, user, beatmap, beatmapset) {
     pp.classList.add("score-pp");
     pp.innerText = `${score.pp.toFixed(0)}pp`;
 
-    const rankedScore = document.createElement("strong");
+    const rankedScore = document.createElement("a");
     rankedScore.classList.add("score-ranked-score");
+    rankedScore.href = `https://osu.ppy.sh/scores/${score.id}`;
     rankedScore.innerText = score.totalScore.toLocaleString('en-US');
 
     leftColumn.append(songName, difficultyName, rank, pp, rankedScore);
@@ -259,14 +260,17 @@ function rowScore(score, user, beatmap, beatmapset) {
     mods.classList.add("score-row-mods");
     score.modAcronyms.forEach(mod => {
         const modSpan = document.createElement("span");
-        modSpan.classList.add("mod", `mod-${getModCategory(mod)}`);
+        modSpan.classList.add("mod", `mod-${getModCategory(mod.substring(0, 2))}`);
         modSpan.innerText = mod;
         mods.appendChild(modSpan);
     });
 
     const rankedScore = document.createElement("td");
-    rankedScore.classList.add("score-row-ranked-score");
-    rankedScore.innerText = score.totalScore.toLocaleString('en-US');
+    const rankedScoreA = document.createElement("a");
+    rankedScoreA.classList.add("score-row-ranked-score");
+    rankedScoreA.href = `https://osu.ppy.sh/scores/${score.id}`;
+    rankedScoreA.innerText = score.totalScore.toLocaleString('en-US');
+    rankedScore.appendChild(rankedScoreA);
 
     const combo = document.createElement("td");
     combo.classList.add("score-row-combo");
@@ -284,7 +288,7 @@ function rowScore(score, user, beatmap, beatmapset) {
     mapImage.classList.add("score-row-map-image");
     const mapImg = document.createElement("img");
     mapImg.src = `https://assets.ppy.sh/beatmaps/${beatmapset.id}/covers/cover@2x.jpg`;
-    mapImg.alt = `${beatmapset.artist} - ${beatmapset.title} [${beatmap.difficultyName}]`;
+    mapImg.alt = "cover";
     mapImage.appendChild(mapImg);
 
     const mapInfo = document.createElement("td");

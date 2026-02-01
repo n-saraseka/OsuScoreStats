@@ -55,8 +55,13 @@ body {
     font-size: 1.3em;
 }
 
-.score-difficulty-name {
+
+.scores-table tr td a, .score a {
     color: white;
+}
+
+.score-ranked-score {
+    font-weight: bold;
 }
 
 .score-difficulty-name:hover {
@@ -123,10 +128,6 @@ body {
 
 .scores-table td {
     padding: 0.1em 0.3em 0.1em 0.3em;
-}
-
-.scores-table tr td a {
-    color: white;
 }
 
 .score-row-map-image img {

@@ -127,7 +127,7 @@ public class OsuApiService(
     public async Task<BeatmapScores> GetBeatmapScoresAsync(int beatmapId, Mode? mode, int legacyOnly = 0, CancellationToken ct = default)
     {
         legacyOnly = (legacyOnly < 0 || legacyOnly > 1) ? 0 : legacyOnly;
-        var queryString = $"legacy_only={legacyOnly}";
+        var queryString = $"?limit=100&legacy_only={legacyOnly}";
         if (mode != null) queryString += $"&mode={mode.ToString().ToLower()}";
         
         var scoresResponse = await SendRequestAsync(HttpMethod.Get, 

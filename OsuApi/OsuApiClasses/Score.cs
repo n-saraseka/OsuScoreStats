@@ -42,4 +42,6 @@ public class Score
     public int LegacyTotalScore { get; set; }
     [JsonProperty("pp")]
     public float? PP { get; set; }
+    [NotMapped]
+    public int? MapRank { get; set; }
 }

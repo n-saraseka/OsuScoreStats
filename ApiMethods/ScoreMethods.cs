@@ -73,20 +73,20 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
                 query = query.Where(s =>
                     s.ModAcronyms.All(m => optionalMods.Contains(m)));
 
-        var recentScores = new List<Score>();
+        var scores = new List<Score>();
 
         if (isDesc)
         {
             switch (sort)
             {
                 case "totalScore":
-                    recentScores = await query.OrderByDescending(s => s.TotalScore).Take(scoresAmount).ToListAsync(ct);
+                    scores = await query.OrderByDescending(s => s.TotalScore).Take(scoresAmount).ToListAsync(ct);
                     break;
                 case "date":
-                    recentScores = await query.OrderByDescending(s => s.Date).Take(scoresAmount).ToListAsync(ct);
+                    scores = await query.OrderByDescending(s => s.Date).Take(scoresAmount).ToListAsync(ct);
                     break;
                 default:
-                    recentScores = await query.OrderByDescending(s => s.PP).Take(scoresAmount).ToListAsync(ct);
+                    scores = await query.OrderByDescending(s => s.PP).Take(scoresAmount).ToListAsync(ct);
                     break;
             }
         }
@@ -96,17 +96,42 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
             switch (sort)
             {
                 case "totalScore":
-                    recentScores = await query.OrderBy(s => s.TotalScore).Take(scoresAmount).ToListAsync(ct);
+                    scores = await query.OrderBy(s => s.TotalScore).Take(scoresAmount).ToListAsync(ct);
                     break;
                 case "date":
-                    recentScores = await query.OrderBy(s => s.Date).Take(scoresAmount).ToListAsync(ct);
+                    scores = await query.OrderBy(s => s.Date).Take(scoresAmount).ToListAsync(ct);
                     break;
                 default:
-                    recentScores = await query.OrderBy(s => s.PP).Take(scoresAmount).ToListAsync(ct);
+                    scores = await query.OrderBy(s => s.PP).Take(scoresAmount).ToListAsync(ct);
                     break;
             }
         }
         
-        return recentScores;
+        var beatmapIds = scores.Select(s => s.BeatmapId).Distinct().ToList();
+
+        foreach (var beatmapId in beatmapIds)
+        {
+            var scoresOnThisBeatmap = scores.Where(s => s.BeatmapId == beatmapId).ToList();
+
+            var allScoresOnThisBeatmap = await dbContext.Scores
+                .Where(s => s.BeatmapId == beatmapId && s.Mode == mode)
+                .OrderByDescending(s => s.TotalScore)
+                .ThenBy(s => s.Id)
+                .ToListAsync(ct);
+
+            for (int i = 0; i < scoresOnThisBeatmap.Count; i++)
+            {
+                scoresOnThisBeatmap[i].MapRank = allScoresOnThisBeatmap.IndexOf(scoresOnThisBeatmap
+                    .Find(s => s.Id == scoresOnThisBeatmap[i].Id)) + 1;
+            }
+
+            foreach (var score in scores)
+            {
+                if (score.BeatmapId == beatmapId)
+                    score.MapRank = scoresOnThisBeatmap.Find(s => s.Id == score.Id).MapRank;
+            }
+        }
+        
+        return scores;
     } 
 }

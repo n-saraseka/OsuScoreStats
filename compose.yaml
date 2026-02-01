@@ -1,0 +1,7 @@
+﻿services:
+  osuscorestats:
+    image: osuscorestats
+    build:
+      context: .
+      dockerfile: Dockerfile
+

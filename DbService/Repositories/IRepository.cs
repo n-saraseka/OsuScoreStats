@@ -6,6 +6,8 @@ public interface IRepository<T>
 {
     DbSet<T> GetAll();
     Task<T?> GetAsync(int id, CancellationToken ct);
+    Task<T?> GetExistingAsync(T item, CancellationToken ct);
+    Task<IEnumerable<T>> GetExistingBulkAsync(IEnumerable<T> items, CancellationToken ct);
     Task<int> CreateAsync(T item, CancellationToken ct);
     Task<int> CreateBulkAsync(IEnumerable<T> items, CancellationToken ct);
     Task<int> UpdateAsync(T item, CancellationToken ct);

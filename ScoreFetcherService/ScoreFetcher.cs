@@ -35,17 +35,23 @@ public class ScoreFetcher(OsuApiService osuApiService, ICalculator scoreCalculat
         
         var users = scores.Scores.Select(s => s.User).Distinct().ToList();
         UserRepository userRepository = new(dbContext);
-        await userRepository.CreateBulkAsync(users, ct);
+        var existingUsers = await userRepository.GetExistingBulkAsync(users, ct);
+        var newUsers = users.Where(user => !existingUsers.Select(u => u.Id).Contains(user.Id)).ToList();
+        await userRepository.CreateBulkAsync(newUsers, ct);
         
         ScoreRepository scoreRepository = new(dbContext);
         ProcessModAcronyms(scores.Scores);
 
-        var unrankedScores = scores.Scores.Where(s => s.PP == null);
-        var rankedScores =  scores.Scores.Where(s => s.PP != null);
+        var existingScores = await scoreRepository.GetExistingBulkAsync(scores.Scores, ct);
+        var newScores = scores.Scores.Where(score => !existingScores.Select(s => s.Id).Contains(score.Id)).ToList();
+
+        var unrankedScores = newScores.Where(s => s.PP == null);
+        var rankedScores =  newScores.Where(s => s.PP != null);
 
         var scoreTasks = new List<Task>();
         
-        scoreTasks.Add(ProcessRankedScoresAsync(rankedScores, ct));
+        if (rankedScores.Count() > 0) 
+            scoreTasks.Add(ProcessRankedScoresAsync(rankedScores, ct));
         if (unrankedScores.Count() > 0)
             scoreTasks.Add(ProcessUnrankedScoresAsync(unrankedScores, ct));
         

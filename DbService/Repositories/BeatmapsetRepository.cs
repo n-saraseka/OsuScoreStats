@@ -14,10 +14,23 @@ public class BeatmapsetRepository(ScoreDataContext db) : IRepository<Beatmapset>
         {
             return await db.Beatmapsets.FindAsync(new object[] { id }, ct);
         }
+        
+        public async Task<Beatmapset?> GetExistingAsync(Beatmapset beatmapset, CancellationToken ct = default)
+        {
+            return await db.Beatmapsets.FirstOrDefaultAsync(bs => bs.Id == beatmapset.Id, ct);
+        }
+
+        public async Task<IEnumerable<Beatmapset>> GetExistingBulkAsync(IEnumerable<Beatmapset> beatmapsets, CancellationToken ct = default)
+        {
+            var existingBeatmapsets = await db.Beatmapsets
+                .Where(beatmapset => beatmapsets.Select(bs => bs.Id).Contains(beatmapset.Id))
+                .ToListAsync(ct);
+            return existingBeatmapsets;
+        }
 
         public async Task<int> CreateAsync(Beatmapset beatmapset, CancellationToken ct = default)
         {
-            var existingBeatmapset = db.Beatmapsets.FirstOrDefault(bs => bs.Id == beatmapset.Id);
+            var existingBeatmapset = await GetExistingAsync(beatmapset, ct);
             if (existingBeatmapset == null)
                 db.Beatmapsets.Add(beatmapset);
             return await db.SaveChangesAsync(ct);
@@ -25,11 +38,9 @@ public class BeatmapsetRepository(ScoreDataContext db) : IRepository<Beatmapset>
 
         public async Task<int> CreateBulkAsync(IEnumerable<Beatmapset> beatmapsets, CancellationToken ct = default)
         {
-            var existingBeatmapsetIds = await db.Beatmapsets
-                .Select(bs => bs.Id)
-                .Where(id => beatmapsets.Select(bs => bs.Id).Contains(id))
-                .ToListAsync(ct);
-            var newBeatmapsets = beatmapsets.Where(bs => !existingBeatmapsetIds.Contains(bs.Id));
+            var existingBeatmapsetIds = await GetExistingBulkAsync(beatmapsets, ct);
+            var newBeatmapsets = beatmapsets
+                .Where(bs => !existingBeatmapsetIds.Select(b => b.Id).Contains(bs.Id));
             db.Beatmapsets.AddRange(newBeatmapsets);
             return await db.SaveChangesAsync(ct);
         }

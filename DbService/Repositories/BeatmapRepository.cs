@@ -14,6 +14,19 @@ public class BeatmapRepository(ScoreDataContext db) : IRepository<APIBeatmap>
     {
         return await db.Beatmaps.FindAsync(new object[] { id }, ct);
     }
+    
+    public async Task<APIBeatmap?> GetExistingAsync(APIBeatmap beatmap, CancellationToken ct = default)
+    {
+        return await db.Beatmaps.FirstOrDefaultAsync(b => b.Id == beatmap.Id, ct);
+    }
+
+    public async Task<IEnumerable<APIBeatmap>> GetExistingBulkAsync(IEnumerable<APIBeatmap> beatmaps, CancellationToken ct = default)
+    {
+        var existingBeatmaps = await db.Beatmaps
+            .Where(beatmap => beatmaps.Select(b => b.Id).Contains(beatmap.Id))
+            .ToListAsync(ct);
+        return existingBeatmaps;
+    }
 
     public async Task<int> CreateAsync(APIBeatmap beatmap, CancellationToken ct = default)
     {

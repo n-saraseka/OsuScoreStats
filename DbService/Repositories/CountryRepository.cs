@@ -14,10 +14,23 @@ public class CountryRepository(ScoreDataContext db)
     {
         return await db.Countries.FindAsync(new object[] { code }, ct);
     }
+    
+    public async Task<Country?> GetExistingAsync(Country country, CancellationToken ct = default)
+    {
+        return await db.Countries.FirstOrDefaultAsync(c => c.Code == country.Code, ct);
+    }
+
+    public async Task<IEnumerable<Country>> GetExistingBulkAsync(IEnumerable<Country> countries, CancellationToken ct = default)
+    {
+        var existingCountries = await db.Countries
+            .Where(country => countries.Select(c => c.Code).Contains(country.Code))
+            .ToListAsync(ct);
+        return existingCountries;
+    }
 
     public async Task<int> CreateAsync(Country country, CancellationToken ct = default)
     {
-        var existingCountry = db.Countries.FirstOrDefault(c => c.Code == country.Code);
+        var existingCountry = await GetExistingAsync(country, ct);
         if (existingCountry == null) 
             db.Countries.Add(country);
         return await db.SaveChangesAsync(ct);
@@ -25,11 +38,9 @@ public class CountryRepository(ScoreDataContext db)
 
     public async Task<int> CreateBulkAsync(IEnumerable<Country> countries, CancellationToken ct = default)
     {
-        var existingCountries = await db.Countries
-            .Select(c => c.Code)
-            .Where(code => countries.Select(c => c.Code).Contains(code))
-            .ToListAsync(ct);
-        var newCountries = countries.Where(c => !existingCountries.Contains(c.Code));
+        var existingCountries = await GetExistingBulkAsync(countries, ct);
+        var newCountries = countries
+            .Where(country => !existingCountries.Select(c => c.Code).Contains(country.Code));
         db.Countries.AddRange(newCountries);
         return await db.SaveChangesAsync(ct);
     }

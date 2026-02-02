@@ -41,6 +41,7 @@ builder.Services.AddHostedService<LeaderboardWorker>();
 builder.Services.AddScoped<ScoreMethods>();
 builder.Services.AddScoped<BeatmapMethods>();
 builder.Services.AddScoped<UserMethods>();
+builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -62,7 +63,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 
-app.MapGet("/scores", async (
+app.MapGet("/api/scores", async (
         ScoreMethods scoreMethods, 
         Mode? mode, 
         DateOnly? dateStart,
@@ -81,7 +82,7 @@ app.MapGet("/scores", async (
     .WithName("GetScores")
     .WithOpenApi();
 
-app.MapGet("/beatmap", async (
+app.MapGet("/api/beatmap", async (
         BeatmapMethods beatmapMethods, 
         int beatmapId,
         CancellationToken ct) =>
@@ -91,7 +92,7 @@ app.MapGet("/beatmap", async (
     .WithName("GetBeatmap")
     .WithOpenApi();
 
-app.MapGet("/beatmaps", async (
+app.MapGet("/api/beatmaps", async (
         BeatmapMethods beatmapMethods, 
         int[] beatmapIds,
         CancellationToken ct) =>
@@ -101,7 +102,7 @@ app.MapGet("/beatmaps", async (
     .WithName("GetBeatmaps")
     .WithOpenApi();
 
-app.MapGet("/beatmapsets", async (
+app.MapGet("/api/beatmapsets", async (
         BeatmapMethods beatmapMethods, 
         int[] beatmapsetIds,
         CancellationToken ct) =>
@@ -111,7 +112,7 @@ app.MapGet("/beatmapsets", async (
     .WithName("GetBeatmapsets")
     .WithOpenApi();
 
-app.MapGet("/user", async (
+app.MapGet("/api/user", async (
         UserMethods userMethods, 
         int userId,
         CancellationToken ct) =>
@@ -121,7 +122,7 @@ app.MapGet("/user", async (
     .WithName("GetUser")
     .WithOpenApi();
 
-app.MapGet("/users", async (
+app.MapGet("/api/users", async (
         UserMethods userMethods, 
         int[] userIds,
         CancellationToken ct) =>
@@ -130,6 +131,11 @@ app.MapGet("/users", async (
     })
     .WithName("GetUsers")
     .WithOpenApi();
+
+app.MapControllerRoute(
+    name: "user",
+    pattern: "user/{id}",
+    defaults: new { controller = "User", action = "Index" });
 
 app.MapControllers();
 app.Run();

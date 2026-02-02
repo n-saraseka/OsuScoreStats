@@ -15,12 +15,25 @@ public class UserRepository(ScoreDataContext db) : IRepository<User>
         return await db.Users.FindAsync(new object[] { id }, ct);
     }
 
+    public async Task<User?> GetExistingAsync(User user, CancellationToken ct = default)
+    {
+        return await db.Users.FirstOrDefaultAsync(u => u.Id == user.Id, ct);
+    }
+
+    public async Task<IEnumerable<User>> GetExistingBulkAsync(IEnumerable<User> users, CancellationToken ct = default)
+    {
+        var existingUsers = await db.Users
+            .Where(user => users.Select(u => u.Id).Contains(user.Id))
+            .ToListAsync(ct);
+        return existingUsers;
+    }
+
     public async Task<int> CreateAsync(User user, CancellationToken ct = default)
     {
         var countryRepository = new CountryRepository(db);
         await countryRepository.CreateAsync(user.Country, ct);
         
-        var existingUser = db.Users.FirstOrDefault(u => u.Id == user.Id);
+        var existingUser = await GetExistingAsync(user, ct);
         if (existingUser == null)
             db.Users.Add(user);
         return await db.SaveChangesAsync(ct);
@@ -39,12 +52,9 @@ public class UserRepository(ScoreDataContext db) : IRepository<User>
         foreach (var user in users)
             user.Country = existingCountries.FirstOrDefault(c => c.Code == user.Country.Code);
         
-        var existingUsers = await db.Users
-            .Select(u => u.Id)
-            .Where(id => users.Select(u => u.Id).Contains(id))
-            .ToListAsync(ct);
-        var newUsers = users.Where(u => !existingUsers.Contains(u.Id));
-        var usersToUpdate = users.Where(u => existingUsers.Contains(u.Id));
+        var existingUsers = await GetExistingBulkAsync(users, ct);
+        var newUsers = users.Where(u => !existingUsers.Select(user => user.Id).Contains(u.Id));
+        var usersToUpdate = users.Where(u => existingUsers.Select(user => user.Id).Contains(u.Id));
 
         db.Users.UpdateRange(usersToUpdate);
         db.Users.AddRange(newUsers);

@@ -144,6 +144,13 @@ public class UserMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
         return scores;
     }
 
+    /// <summary>
+    /// Get count of scores set by user
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <param name="mode">Gameplay mode (osu, taiko, fruits, mania)</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Count of scores set by user</returns>
     public async Task<int> GetUserScoresCountAsync(int userId, Mode? mode, CancellationToken ct)
     {
         var dbContext = await dbContextFactory.CreateDbContextAsync(ct);

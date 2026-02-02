@@ -99,7 +99,7 @@ async function getScores(mode = 0, amount = 100, dateStart = currentDateStart, d
     params.append("isDesc", isDesc.toString());
     params.append("dateStart", getDateString(dateStart));
     params.append("dateEnd", getDateString(dateEnd));
-    const response = await fetch("/scores?" + params.toString(), {
+    const response = await fetch("/api/scores?" + params.toString(), {
         method: "GET",
         headers: { "Accept": "application/json" },
     });
@@ -114,7 +114,7 @@ async function getBeatmaps(beatmapIds) {
     const params = new URLSearchParams();
     beatmapIds.forEach(id => params.append('beatmapIds', id));
 
-    const response = await fetch("/beatmaps?" + params.toString(), {
+    const response = await fetch("/api/beatmaps?" + params.toString(), {
         method: "GET",
         headers: { "Accept": "application/json" },
     });
@@ -129,7 +129,7 @@ async function getBeatmapsets(beatmapsetIds) {
     const params = new URLSearchParams();
     beatmapsetIds.forEach(id => params.append('beatmapsetIds', id));
 
-    const response = await fetch("/beatmapsets?" + params.toString(), {
+    const response = await fetch("/api/beatmapsets?" + params.toString(), {
         method: "GET",
         headers: { "Accept": "application/json" },
     });
@@ -144,7 +144,7 @@ async function getUsers(userIds) {
     const params = new URLSearchParams();
     userIds.forEach(id => params.append('userIds', id));
 
-    const response = await fetch("/users?" + params.toString(), {
+    const response = await fetch("/api/users?" + params.toString(), {
         method: "GET",
         headers: { "Accept": "application/json" },
     });

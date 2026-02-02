@@ -37,7 +37,7 @@ builder.Services.AddSingleton<RateLimiter>(sp =>
 builder.Services.AddSingleton<OsuApiService>();
 builder.Services.AddSingleton<ICalculator, ScoreCalculator>();
 builder.Services.AddSingleton<IScoreFetcher, ScoreFetcher>();
-builder.Services.AddHostedService<LeaderboardWorker>();
+//builder.Services.AddHostedService<LeaderboardWorker>();
 builder.Services.AddScoped<ScoreMethods>();
 builder.Services.AddScoped<BeatmapMethods>();
 builder.Services.AddScoped<UserMethods>();
@@ -82,12 +82,12 @@ app.MapGet("/api/scores", async (
     .WithName("GetScores")
     .WithOpenApi();
 
-app.MapGet("/api/beatmap", async (
+app.MapGet("/api/beatmaps/{id:int}", async (
         BeatmapMethods beatmapMethods, 
-        int beatmapId,
+        int id,
         CancellationToken ct) =>
     {
-        return await beatmapMethods.GetBeatmapAsync(beatmapId, ct);
+        return await beatmapMethods.GetBeatmapAsync(id, ct);
     })
     .WithName("GetBeatmap")
     .WithOpenApi();
@@ -112,12 +112,12 @@ app.MapGet("/api/beatmapsets", async (
     .WithName("GetBeatmapsets")
     .WithOpenApi();
 
-app.MapGet("/api/user", async (
-        UserMethods userMethods, 
-        int userId,
+app.MapGet("/api/users/{id:int}", async (
+        UserMethods userMethods,
+        int id,
         CancellationToken ct) =>
     {
-        return await userMethods.GetUserAsync(userId, ct);
+        return await userMethods.GetUserAsync(id, ct);
     })
     .WithName("GetUser")
     .WithOpenApi();
@@ -130,6 +130,34 @@ app.MapGet("/api/users", async (
         return await userMethods.GetUsersAsync(userIds, ct);
     })
     .WithName("GetUsers")
+    .WithOpenApi();
+
+app.MapGet("/api/users/{id:int}/scores", async (
+        UserMethods userMethods,
+        int id,
+        Mode? mode,
+        string[]? mandatoryMods,
+        string[]? optionalMods,
+        int? page,
+        int? amountPerPage,
+        string? sort,
+        bool isDesc,
+        CancellationToken ct) =>
+    {
+        return await userMethods.GetUserScoresAsync(id, mode, mandatoryMods, optionalMods, page, amountPerPage, sort, isDesc, ct);
+    })
+    .WithName("GetUserScores")
+    .WithOpenApi();
+
+app.MapGet("/api/users/{id:int}/scores/count", async (
+        UserMethods userMethods,
+        int id,
+        Mode? mode,
+        CancellationToken ct) =>
+    {
+        return await userMethods.GetUserScoresCountAsync(id, mode, ct);
+    })
+    .WithName("GetUserScoresCount")
     .WithOpenApi();
 
 app.MapControllerRoute(

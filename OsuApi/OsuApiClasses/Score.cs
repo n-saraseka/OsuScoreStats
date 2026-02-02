@@ -38,6 +38,8 @@ public class Score
     public Statistics MaximumStatistics { get; set; } = null!;
     [JsonProperty("total_score")]
     public int TotalScore { get; set; }
+    [JsonProperty("classic_total_score")]
+    public int ClassicTotalScore { get; set; }
     [JsonProperty("legacy_total_score")]
     public int LegacyTotalScore { get; set; }
     [JsonProperty("pp")]

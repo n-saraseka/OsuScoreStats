@@ -27,7 +27,7 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
         string? country,
         string[]? mandatoryMods,
         string[]? optionalMods,
-        int? amount = 25,
+        int? amount,
         string? sort = "pp",
         bool isDesc = true,
         CancellationToken ct = default)
@@ -77,6 +77,9 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
         {
             case "totalScore":
                 query = (isDesc) ? query.OrderByDescending(s => s.TotalScore) : query.OrderBy(s => s.TotalScore);
+                break;
+            case "classicTotalScore":
+                query = (isDesc) ? query.OrderByDescending(s => s.ClassicTotalScore) : query.OrderBy(s => s.ClassicTotalScore);
                 break;
             case "date":
                 query = (isDesc) ? query.OrderByDescending(s => s.Date) : query.OrderBy(s => s.Date);

@@ -320,8 +320,10 @@ function rowScore(score, user, beatmap, beatmapset) {
     mapImage.classList.add("score-row-map-image");
     const mapImg = document.createElement("img");
     mapImg.src = `https://assets.ppy.sh/beatmaps/${beatmapset.id}/covers/cover@2x.jpg`;
-    mapImg.alt = "cover";
-    mapImage.appendChild(mapImg);
+    mapImg.addEventListener("error", () => {
+        mapImg.removeAttribute("src");
+    })
+    mapImage.appendChild(mapImg);   
 
     const mapInfo = document.createElement("td");
     mapInfo.classList.add("score-beatmap");
@@ -344,7 +346,6 @@ function clearData() {
 
 // fill page with score data
 async function fillWithData(mode = 0, amount = 100, dateStart = currentDateStart, dateEnd = today, sort = "pp", isDesc = true) {
-    console.log(dateStart, dateEnd);
     const scores = await getScores(mode, amount, dateStart, dateEnd, sort, isDesc);
 
     let userIds = [];

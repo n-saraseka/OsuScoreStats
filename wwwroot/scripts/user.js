@@ -26,7 +26,8 @@ const userCountryCode = userCard.getAttribute("user-country");
 const userDisplay = document.querySelector(".user-data");
 const userName = document.querySelector(".user-name").innerText;
 const userScores = document.querySelector(".scores");
-const userScoresCondensed = document.querySelector(".scores-table");
+const userScoresCondensedTable = document.querySelector(".scores-table");
+const userScoresCondensed = userScoresCondensedTable.querySelector("tbody");
 
 // amount of scores to show (25, 50, 75, 100)
 const amountSelect = document.querySelector("#scores-amount");
@@ -284,7 +285,9 @@ function rowScore(score, beatmap, beatmapset) {
     mapImage.classList.add("score-row-map-image");
     const mapImg = document.createElement("img");
     mapImg.src = `https://assets.ppy.sh/beatmaps/${beatmapset.id}/covers/cover@2x.jpg`;
-    mapImg.alt = "cover";
+    mapImg.addEventListener("error", () => {
+        mapImg.removeAttribute("src");
+    })
     mapImage.appendChild(mapImg);
 
     const mapInfo = document.createElement("td");
@@ -413,11 +416,11 @@ function clearData() {
 function switchView() {
     if (currentView === "cards") {
         userScores.style.display = "grid";
-        userScoresCondensed.style.display = "none";
+        userScoresCondensedTable.style.display = "none";
     }
     else {
         userScores.style.display = "none";
-        userScoresCondensed.style.display = "table";
+        userScoresCondensedTable.style.display = "table";
     }
 }
 

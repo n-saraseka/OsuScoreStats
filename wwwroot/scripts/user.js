@@ -393,7 +393,7 @@ function generateScorePagesUl(scoreCount, amountPerPage) {
                     if (activeLi !== li) {
                         activeLi.classList.remove("active");
                         li.classList.add("active");
-                        await fillWithData(0, parseInt(li.innerText));
+                        await fillWithData(0, parseInt(li.innerText), currentThreshold, currentSort, (currentDirection === "desc"));
                     }
                 })
                 scorePagesUl.appendChild(li);

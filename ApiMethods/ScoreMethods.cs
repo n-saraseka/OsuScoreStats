@@ -73,39 +73,22 @@ public class ScoreMethods(IDbContextFactory<ScoreDataContext> dbContextFactory)
                 query = query.Where(s =>
                     s.ModAcronyms.All(m => optionalMods.Contains(m)));
 
-        var scores = new List<Score>();
-
-        if (isDesc)
+        switch (sort)
         {
-            switch (sort)
-            {
-                case "totalScore":
-                    scores = await query.OrderByDescending(s => s.TotalScore).Take(scoresAmount).ToListAsync(ct);
-                    break;
-                case "date":
-                    scores = await query.OrderByDescending(s => s.Date).Take(scoresAmount).ToListAsync(ct);
-                    break;
-                default:
-                    scores = await query.OrderByDescending(s => s.PP).Take(scoresAmount).ToListAsync(ct);
-                    break;
-            }
+            case "totalScore":
+                query = (isDesc) ? query.OrderByDescending(s => s.TotalScore) : query.OrderBy(s => s.TotalScore);
+                break;
+            case "date":
+                query = (isDesc) ? query.OrderByDescending(s => s.Date) : query.OrderBy(s => s.Date);
+                break;
+            default:
+                query = (isDesc) ? query.OrderByDescending(s => s.PP) : query.OrderBy(s => s.PP);
+                break;
         }
         
-        else
-        {
-            switch (sort)
-            {
-                case "totalScore":
-                    scores = await query.OrderBy(s => s.TotalScore).Take(scoresAmount).ToListAsync(ct);
-                    break;
-                case "date":
-                    scores = await query.OrderBy(s => s.Date).Take(scoresAmount).ToListAsync(ct);
-                    break;
-                default:
-                    scores = await query.OrderBy(s => s.PP).Take(scoresAmount).ToListAsync(ct);
-                    break;
-            }
-        }
+        query = query.Take(scoresAmount);
+
+        var scores = await query.ToListAsync(ct);
         
         var beatmapIds = scores.Select(s => s.BeatmapId).Distinct().ToList();
 

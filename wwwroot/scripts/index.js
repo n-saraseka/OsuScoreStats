@@ -180,19 +180,35 @@ function gridScore(score, user, beatmap, beatmapset) {
     pp.classList.add("score-pp");
     pp.innerText = `${score.pp.toFixed(0)}pp`;
 
-    const rankedScore = document.createElement("a");
-    rankedScore.classList.add("score-ranked-score");
-    rankedScore.href = `https://osu.ppy.sh/scores/${score.id}`;
-    rankedScore.innerText = score.totalScore.toLocaleString('en-US');
+    const scoreTotalDiv = document.createElement("div");
+    scoreTotalDiv.classList.add("score-total");
+    
+    const standardizedScore = document.createElement("a");
+    standardizedScore.classList.add("score-primary");
+    standardizedScore.href = `https://osu.ppy.sh/scores/${score.id}`;
+    standardizedScore.innerText = score.totalScore.toLocaleString('en-US');
+    standardizedScore.title = "Standardized score";
 
-    leftColumn.append(songName, difficultyName, rank, pp, rankedScore);
+    const classicScore = document.createElement("span");
+    classicScore.classList.add("score-secondary");
+    if (score.legacyTotalScore) {
+        classicScore.innerText = score.legacyTotalScore.toLocaleString('en-US');
+    }
+    else {
+        classicScore.innerText = score.classicTotalScore.toLocaleString('en-US');
+    }
+    classicScore.title = "Classic score";
+    
+    scoreTotalDiv.append(standardizedScore, classicScore);
+
+    leftColumn.append(songName, difficultyName, rank, pp, scoreTotalDiv);
     scoreDiv.append(leftColumn);
 
     const rightColumn = document.createElement("div");
     rightColumn.classList.add("score-column", "score-right-column");
 
     const playerA = document.createElement("a");
-    playerA.href = `https://osu.ppy.sh/users/${user.id}`;
+    playerA.href = `/user/${user.id}`;
 
     const playerImg = document.createElement("img");
     playerImg.classList.add("score-player-img");
@@ -247,12 +263,12 @@ function rowScore(score, user, beatmap, beatmapset) {
 
     const rank = document.createElement("td");
     rank.classList.add("score-row-rank");
-    rank.innerText = "#1";
+    rank.innerText = `#${score.mapRank}`;
 
     const playerName = document.createElement("td");
     playerName.classList.add("score-row-player-name");
     const playerA = document.createElement("a");
-    playerA.href = `https://osu.ppy.sh/users/${user.id}`;
+    playerA.href = `/user/${user.id}`;
     playerA.innerText = user.username;
     playerName.appendChild(playerA);
 
@@ -266,11 +282,25 @@ function rowScore(score, user, beatmap, beatmapset) {
     });
 
     const rankedScore = document.createElement("td");
-    const rankedScoreA = document.createElement("a");
-    rankedScoreA.classList.add("score-row-ranked-score");
-    rankedScoreA.href = `https://osu.ppy.sh/scores/${score.id}`;
-    rankedScoreA.innerText = score.totalScore.toLocaleString('en-US');
-    rankedScore.appendChild(rankedScoreA);
+    rankedScore.classList.add("score-total");
+
+    const standardizedScore = document.createElement("a");
+    standardizedScore.classList.add("score-primary");
+    standardizedScore.href = `https://osu.ppy.sh/scores/${score.id}`;
+    standardizedScore.innerText = score.totalScore.toLocaleString('en-US');
+    standardizedScore.title = "Standardized score";
+
+    const classicScore = document.createElement("span");
+    classicScore.classList.add("score-secondary");
+    if (score.legacyTotalScore) {
+        classicScore.innerText = score.legacyTotalScore.toLocaleString('en-US');
+    }
+    else {
+        classicScore.innerText = score.classicTotalScore.toLocaleString('en-US');
+    }
+    classicScore.title = "Classic score";
+    
+    rankedScore.append(standardizedScore, classicScore);
 
     const combo = document.createElement("td");
     combo.classList.add("score-row-combo");
@@ -281,8 +311,10 @@ function rowScore(score, user, beatmap, beatmapset) {
     acc.innerText = (score.accuracy * 100).toFixed(2) + "%";
 
     const misses = document.createElement("td");
-    misses.classList.add("score-row-misses");
-    misses.innerText = score.statistics.countMiss;
+    misses.classList.add("score-misses");
+    if (score.statistics.countMiss) {
+        misses.innerText = `${score.statistics.countMiss}x`;
+    }
 
     const mapImage = document.createElement("td");
     mapImage.classList.add("score-row-map-image");
